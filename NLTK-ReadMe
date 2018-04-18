@@ -1,0 +1,140 @@
+pip3 install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.0.0-py3-none-any.whl
+
+To update PIP
+                python -m pip install -U pip
+
+To install NLTK
+                sudo pip install -U nltk
+
+To install Numpy
+                sudo pip install -U numpy
+
+To download all the corpus of NLTK data
+                import nltk
+                nltk.download('all')
+
+http://pyvideo.org/pydata-london-2017/building-a-chatbot-with-python-nltk-and-scikit.html
+
+Python ---------------   NLTK ---------------------
+
+Tokenization:-  is a method of breaking up a piece of text into many pieces, such as sentences and words,
+WordNet:- is a dictionary designed for programmatic access by natural language processing systems
+                following usefulness of WordNet:-
+                                a. Looking up the definition of a word
+                                b. Finding synonyms and antonyms
+                                c. Exploring word relations and similarity
+                                d. Word sense disambiguation for words that have multiple uses and definitions
+
+A 'corpus' is just a body of text and 'corpus readers' are designed to make accessing a corpus much easier than direct file access.             
+
+@ Start with NLTK example
+
+			from nltk.tokenize import sent_tokenize
+			import nltk.data
+
+			para = "Hello World. It's good to see you. Thanks for buying this book."
+			sentense_token = sent_tokenize(para)
+			print(sentense_token)
+				  or
+			import nltk.data
+			tokenizer = nltk.data.load('tokenizers/punkt/PY3/english.pickle')
+			tokenizer.tokenize(para)
+
+			Both do the same thing but the only difference is ""sent_tokenize" load the pickle data on demand. So if you're going to be tokenizing a lot of sentences,
+			it's more efficient to load the PunktSentenceTokenizer class once, and call its tokenize() method.
+
+nltk.tokenize.sent_tokenize -> is a sentences tokenizer. It divide paragraph into sentence.
+nltk.tokenize.word_tokenize -> is a word tokenizer. It will create a work token from sentence.
+     word_tokenize is a wapper over the TreebankWordTokenizer. Internally it will call the tokenize method of TreebankWordTokenizer.
+
+All the tokenizer inherit the TokenizerI interface
+
+                TokenizerI
+                    |
+                    |
+                     --> PunktWordTokenizer
+                     --> TreebankWordTokenizer
+                               |
+                               |
+                                --> RegexpTokenizer
+                                        |
+                                        |
+                                        --> WordPunctTokenizer
+                                        --> WhitespaceTokenizer
+        One of the tokenizer's most significant conventions is to separate contractions
+
+@ use of TreebankWordTokenizer
+
+                like :- >>> from nltk.tokenize import word_tokenize
+                        >>> word_tokenize('Can't wait')
+                output  >>> ['ca', "n't", 'wait']
+
+				The output of work_tokenizer/TreebankWordTokenizer is not acceptable so we choice tokenizer extending regular expressions.
+
+@ user of PunktWordTokenizer
+                        >>> from nltk.tokenize import PunktWordTokenizer
+                        >>> tokenizer = PunktWordTokenizer()
+                        >>> tokenizer.tokenize("Can't is a contraction.")
+                output  >>> ['Can', "'t", 'is', 'a', 'contraction.']
+
+	          It splits on punctuation, but keeps it with the word instead of creating separate tokens.
+
+@ use of WordPunctTokenizer
+                        >>> from nltk.tokenize import WordPunctTokenizer
+                        >>> tokenizer = WordPunctTokenizer()
+                        >>> tokenizer.tokenize("Can't is a contraction.")
+                 output >>> ['Can', "'", 't', 'is', 'a', 'contraction', '.']
+
+                    It splits all punctuation into separate tokens:
+
+@ use of RegexpTokenizer
+        by using RegexpTokenizer you can create your own tokenizer. but use it carefully.
+
+@Filtering stopwords in a tokenized
+
+                1 >>> from nltk.corpus import stopwords
+                2 >>> from string import punctuation
+                3 >>> from nltk.tokenize import WordPunctTokenizer
+                4 >>> english_stopword = set(stopwords.words('english')+list(punctuation))
+                5 >>> sentence ='You can\'t do that! This is a passenger train...The blood of Jesus Christ! You can\'t do that; this is a passenger train! You need to find Jesus!...That is the devil\'s drink. By the blood of Jesus you need to repent!'
+                6 >>> tokenizer= WordPunctTokenizer()
+                7 >>> wordList = tokenizer.tokenize(sentence)
+                8 >>> withoutStopword = [word for word in wordList if word not in english_stopword]
+                9 >>> print(withoutStopword)
+
+                @ line no 1 we are importing stopword those are declared n /nltk_data/corpora/stopwords, even we can add more stopwords
+                @ line no 2 we are importing all the punctuation define string like :- !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+                @ line no 4 we create a set of all stopword and punctuation
+                @ line no 6 we create WordPunctTokenizer that convert the sentence into word phase that done in line no 7
+                @ line no 8 we go through the loop
+		                         " for word in wordList "
+                                      and check word is not a stopword then add the word in list
+
+@ Synsets for a word
+                WordNet is a lexical database for the English language
+                Synset instances, which are groupings of synonymous words that express the same concept
+
+                To access the Wrodnet corpus data we need to download 'wordnet' and unzip in corpus folder. So that WordNetCorpusReader can access it.
+                To get the Synset of phrase we need to import
+
+                >>> from nltk.corpus import wordnet
+                >>> synset= wordnet.synsets('cookbook')[0]
+                >>> synset.name()                        # will give you a unique name for the Synset
+                >>> synset.definition()                  # should be self-explanatory
+                >>> synset.example()                     # which contains a list of phrases that use the word in context
+
+               
+@ lemmas and synonyms in WordNet
+
+                lemma :- is the canonical form or morphological form of a word. (how things are put together)
+                1 >>> lemmas = syn.lemmas()
+                2 >>> for lem in lemmas:
+			    3 >>>     print(lem)
+			    4 >>>     print(lem.name())
+                5 >>> print(lemmas[0].synset() == lemmas[1].synset())
+
+                @ line 1 we retrieve the lemmas of word 'CookBook'. That return two lemmas. And both lemmas are belong to same group is proved in line 5 ie. cookbook.n.01
+
+@ Working with hypernyms
+                Synsets are organized in a structure similar to that of an inheritance tree. More abstract terms are known as hypernyms
+                Hypernyms provide a way to categorize and group words based on their similarity to each other.
