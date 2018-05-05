@@ -138,3 +138,244 @@ All the tokenizer inherit the TokenizerI interface
 @ Working with hypernyms
                 Synsets are organized in a structure similar to that of an inheritance tree. More abstract terms are known as hypernyms
                 Hypernyms provide a way to categorize and group words based on their similarity to each other.
+				
+				 To get similarity between two words
+                  First we need Synsets of two words and then by using wup_similarity (method is short for Wu-Palmer Similarity). which is a scoring method based on how
+                  similar the word senses are and where the Synsets occur relative to each other in the hypernym tree
+
+                  >>> from nltk.corpus import wordnet
+                  >>> syncook = wordnet.synsets('cookbook')[0]
+				  >>> synbook = wordnet.synsets('book')[0]
+				  >>> print(syncook.wup_similarity(synbook));
+		   output >>>  0.9090909090909091
+	
+				In this way we found the similarity between two words.
+
+@ Discovering word collocations
+				Collocations :- are two or more words that tend to appear frequently together. Like United State, where United is appear in conjunction with other
+								words like United Kingdom or United Airlines.
+
+				Discovering collocations in this list of words means that we'll find common phrases that occur frequently throughout the text.
+		
+		bigrams:- a pair of consecutive written units such as letters, syllables, or words
+
+@ Chapter 2
+
+	@ Stemming words :- Stemming is a technique to remove affixes from a word, ending up with the stem. For example, the stem of cooking is cook, and a good
+						stemming algorithm knows that the ing suffix can be removed.
+		
+		Most commonly used stem algorithm is "Porter stemming algorithm by Martin Porter."
+
+			 	>>> from nltk.stem import PorterStemmer
+				>>> stemmer = PorterStemmer()
+				>>> print(stemmer.stem('cooking'))
+		output  >>> cook                             
+				>>> print(stemmer.stem('cookery'))
+		output  >>> cookeri                        
+
+				Stemmerl
+						|
+						|
+					  	 --> PorterStemmer
+						|
+						|
+						 --> LancasterStemmer
+						|
+						|
+						 --> RegexStemmer
+						|
+						|
+ 						 --> SnowballStemmer
+
+PorterStemmer and LancasterStemmer are both same but slight difference in put like
+
+					Class  				Input                  Output
+					PorterStemmer       cookery                cookeri
+					LancasterStemmer    cookery                cookery
+
+	RegexStemmer you can define your own regular expression to remove 'ing' from word.
+	
+		Exp :
+			stemmer = RegexpStemmer('ing')
+			stemmer.stem('cooking') 		--> 'cook'
+			stemmer.stem('ingleside')   	--> 'leside'
+
+	SnowballStemmer -> is the multi language stemmer supporter.
+
+@ Replacing words matching regular expression
+
+		We are going to replace a those words that end with n't/ve/s/re like
+					haven't -> have not
+					should've -> should not
+					We'll -> We will
+
+				To achieve above result we need to create a regular expression set where we kept all of the expression then apply then over the word phase.
+
+@ Lemmatizing words with WordNet
+	Lemmatization is very similar to stemming, but is more akin to synonym replacement.A lemma is a root word, as opposed to the root stem.
+	Now lets take an example say we had a word 'cooking'. Now the noun representation of 'cooking' is 'cooking' but verb will be cook.
+
+	Example in sentence : "he developed an interest in cooking". Here the cooking is noun
+						  "shall I cook dinner tonight?". Here the cook is verb.
+						  "while the rice is cooking, add the saffron to the stock". Here cooking is used as present participle.
+
+	Now how we are going to achieve using NLTK
+	
+			>>> from nltk.stem import WordNetLemmatizer
+			>>> lemmatizer =  WordNetLemmatizer()
+			>>> print(lemmatizer.lemmatize('studied')) # By default it return the noun phase
+	output  >>> studied
+			>>> print(lemmatizer.lemmatize('studied', pos='v'))
+	output  >>> study
+
+	The WordNetLemmatizer class is a thin wrapper around the wordnet corpus and uses the morphy() function of the WordNetCorpusReader class to find a lemma.
+		If no lemma is found then it return the same word or word itself a lemma.
+		In this case 'studies' -> not lemma found for noun. but get the verb phase ie. study.
+
+@Replacing words matching regular expressions
+		Our first example to replace the contraction word. i.e
+				should've --> should have
+				can't     --> cannot
+
+		To achieve this goal we need to write a regular expression
+			If you check
+				won't -> will not -> r'won\'t  --> here 'r' represent regex if the string match won't then replace it with will not
+				we'll -> we will  -> r'(\w+)\'ll --> here 'r' represent regex if the string match (\w+) all character end with "'ll". \w+ is a group
+
+			replacement_patterns = [
+					(r'won\'t', 'will not'),
+					(r'can\'t', 'cannot'),
+					(r'i\'m', 'i am'),
+					(r'ain\'t', 'is not'),
+					(r'(\w+)\'ll', '\g<1> will'),
+					(r'(\w+)n\'t', '\g<1> not'),
+					(r'(\w+)\'ve', '\g<1> have'),
+					(r'(\w+)\'s', '\g<1> is'),
+					(r'(\w+)\'re', '\g<1> are'),
+					(r'(\w+)\'d', '\g<1> would')
+			]
+
+			class RegexpReplacer(object):
+					def __init__(self, patterns = replacement_patterns):
+							self.pattern = [(re.compile(regex), repl) for (regex, repl) in patterns]
+
+					def replacer(self ,text):
+							s = text
+							for (expression, repl) in self.pattern:
+								s = re.sub(expression, repl, s)
+								return s;
+
+					Above we create a init method where we initialize the compiled version of regular expression in self.pattern
+					in replacer method we replace that word usng re.sub(<expression>,<expected>, <word>)
+
+Replacing contraction word before tokenize
+
+			import re
+			from nltk.tokenize import word_tokenize
+			from nltk.corpus import stopwords
+			from string import punctuation
+			from nltk.stem import WordNetLemmatizer
+
+			# Step we are following
+			# 1. replace all the contraction word
+			# 2. tokenize all the word
+			# 3. remove stop words
+			# 4. lematize the words
+
+			str="Alexa'll you please turn all the lights on of my bedroom."
+
+			wordList= word_tokenize(regReplacer.replacer(str))
+			print("Printing the word list after contraction =",wordList)
+			word = [lemmatizer.lemmatize(word) for word in wordList if word not in stopword_set]
+			print("Printing the word list after removing stop words =",word)
+
+@ Replacing negations with antonyms -- Need to complete
+			An antonym is a word that has the opposite meaning of another word
+
+@ Creating a wordlist corpus
+
+	To create a custom corpus list we need the WordListCorpusReader class. This class extends CorpusReader which identify the files that need to be
+	read while WordListCorpusReader reads the files and tokenizes each line to produce a list of words.
+
+			Example              
+			>>>        import nltk.data
+			>>> from nltk.corpus.reader import WordListCorpusReader
+			>>> wordlist = WordListCorpusReader("C:/nltk_data/corpora/cookbook" ,['wordlist'])
+			>>> print(wordlist.words())
+	output	>>> ['nltk', 'corpus', 'corpora', 'wordnet']
+			>>> print(wordlist.fileids())
+	output   >>> ['wordlist'] --> is the file name
+
+@ Creating a part-of-speech tagged word corpus
+
+				CC --> coordinating conjunction
+				CD --> cardinal digit
+				DT --> determiner
+				EX-->existential there (like: “there is” … think of it like “there exists”)
+				FW -->foreign word
+				IN preposition/subordinating conjunction
+				JJ adjective ‘big’
+				JJR adjective, comparative ‘bigger’
+				JJS adjective, superlative ‘biggest’
+				LS list marker 1)
+				MD modal could, will
+				NN noun, singular ‘desk’
+				NNS noun plural ‘desks’
+				NNP proper noun, singular ‘Harrison’
+				NNPS proper noun, plural ‘Americans’
+				PDT predeterminer ‘all the kids’
+				POS possessive ending parent‘s
+				PRP personal pronoun I, he, she
+				PRP$ possessive pronoun my, his, hers
+				RB adverb very, silently,
+				RBR adverb, comparative better
+				RBS adverb, superlative best
+				RP particle give up
+				TO to go ‘to‘ the store.
+				UH interjection errrrrrrrm
+				VB verb, base form take
+				VBD verb, past tense took
+				VBG verb, gerund/present participle taking
+				VBN verb, past participle taken
+				VBP verb, sing. present, non-3d take
+				VBZ verb, 3rd person sing. present takes
+				WDT wh-determiner which
+				WP wh-pronoun who, what
+				WP$ possessive wh-pronoun whose
+				WRB wh-abverb where, when
+
+				import nltk.data
+				from nltk.corpus.reader import WordListCorpusReader
+				from nltk.corpus import names
+				from nltk.corpus.reader import TaggedCorpusReader
+				from nltk.tokenize import SpaceTokenizer
+
+			1.	reader = TaggedCorpusReader("C:/nltk_data/corpora/treebank/tagged",r'.*\.pos', word_tokenizer=SpaceTokenizer(), tagset='en-brown')
+			2.	print(reader.words('wsj_0001.pos'))
+			3.	print(reader.tagged_words('wsj_0001.pos'))
+			4.	print(reader.tagged_sents('wsj_0001.pos'))
+			5.	print(reader.tagged_paras('wsj_0001.pos'))
+			6.	print(reader.fileids())
+			7.	print("\n")
+			8.	print(reader.tagged_words('wsj_0001.pos',tagset='universal'))
+
+TaggedCorpusReader -> The corpus that is been tagged into part-of-speech. It took multiple parameters here we send from which location hit need to pickup
+					pos files and what is the tokenizer and tagset. Here tagset indication which tagset the file is belong too. then @ line 2 we read all the words
+					in pos file. The read the word with tagset, Sentence with tagset and paragraph with tagset.
+					@ line 8 we convert tagset into universal form
+
+Lesk used of word meaning
+
+Classification Problem :-
+algo are :- Naive bayes
+		Support vector machine
+Clusturing Problem:-
+	K-Mean and Hierarchical Clusturing
+
+Install
+pip install beautifulsoup4
+pip install lxml
+
+The FreqDist class is used to encode “frequency distributions”, which count the number of times that each outcome of an experiment occurs.
+heapq - nlargest -> is used to sort largest collection
+intracluster similaruty
