@@ -12,7 +12,9 @@ class ReadSulekha(object):
         self.CityName=''
         self.CategoryName=''
         self.PageNr=''
+
         for city in list_of_city:
+            self.file = open('/home/liveyoung/Tensor/'+city+'.txt', 'w')
             url_comp=self.url+'/'+board+'/'+city
             self.CityName=city
             page = request.urlopen(url_comp).read().decode('utf8', 'ignore')
@@ -25,6 +27,7 @@ class ReadSulekha(object):
             pageURL=pageURL.replace('#4', self.CityName)
             self.populateSchoolNameAndURL(pageURL)
             self.extractSchoolDetails()
+            self.file.close()
 
     def populateSchoolNameAndURL(self, pageURL):
         i=1
@@ -38,25 +41,40 @@ class ReadSulekha(object):
             if soup.find('input', {'id': 'hdnBizHasMoreResults'}).get('value') == 'False':
                 break;
             i=i+1
+
     def extractSchoolDetails(self):
         for key,value in self.urlMap.items():
-            page = request.urlopen(self.url+value).read().decode('utf8', 'ignore')
+            page = request.urlopen(self.url+value).read().dweb_icecode('utf8', 'ignore')
             soup = BeautifulSoup(page, 'lxml')
-            dataList={}
-            dataList["address"]=soup.find('address')
-            dataList['contactPerson']=soup.find('label', {'class':'icon-person'})
-            dataList['mobileno']=soup.find('span', {'class': 'icon-mobile ph-no'})
-            dataList['emailid']=soup.find('label', {'class': 'icon-email'})
-            dataList['website']=soup.find('span', {'class': 'busurl'})
-            dataList['service']=';'.join(map(lambda p: p.text, soup.find_all('a',{'class':'GAQ_C_SERVICEOFFERED'})))
-            for k, const in dataList.items():
-                if const != None and isinstance(const,str)==False :
-                    print(const.text)
+            finalList=[]
+            finalList.append(key)
+            tmp = soup.find('address')
+            finalList.append('' if tmp==None else tmp.text)
+
+            tmp = soup.find('label', {'class': 'icon-person'})
+            finalList.append( tmp.parent.text if (tmp!=None and tmp.parent.name == 'li') else '')
+
+            tmp = soup.find('span', {'class': 'icon-mobile ph-no'})
+            finalList.append('' if tmp==None else tmp.text)
+
+            tmp= soup.find('label', {'class': 'icon-email'})
+            finalList.append( tmp.parent.text if (tmp != None and tmp.parent.name == 'li') else '')
+
+            tmp=soup.find('span', {'class': 'ellips'})
+            finalList.append('' if tmp==None else tmp.text)
+
+            finalList.append(';'.join(map(lambda p: p.text, soup.find_all('a',{'class':'GAQ_C_SERVICEOFFERED'}))))
+            finalList.append(self.url + value)
+            val='#~#'.join(str(v) for v in finalList)
+            self.file.write(val+'\n')
+            print(val)
 
 
-board ="icse-schools"
+board ="playschools"
 
-city=['chennai']
+city=['kolkata','chennai']
 
 sulekha = ReadSulekha()
 sulekha.parseCityData(board,city)
+#age=18
+#print('Kid' if age>18 else '')
